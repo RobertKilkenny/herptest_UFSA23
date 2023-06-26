@@ -1,5 +1,6 @@
 import math
 import os
+import shutil
 from canvasapi import Canvas
 from csv import reader
 from dotenv import load_dotenv
@@ -8,7 +9,8 @@ import sys
 import argparse
 from pengtest.env_wrapper import EnvWrapper
 
-
+# For testing purposes- turn off when not testing
+testStudent = True
 
 class CanvasWrapper:
     def __init__(self, API_URL, env_path, token_type="TOKEN"): #Initializes CanvasWrapper object which stores an authenticated CanvasAPI Canvas object
@@ -41,20 +43,47 @@ class CanvasWrapper:
 
 
     def get_download_link(self, _course, assignment): #Get submissions.zip download link from a given course assignment using the passed in course name and assignment name
+        # default directory- recreate if already exists
+        subdir = os.getcwd() + "/submissions"
+        if(os.path.exists(subdir)):
+            shutil.rmtree(subdir)
+        else:
+            os.mkdir(subdir)
+        # lastnamefirstname
+        names = {1267749: 'studenttest'}
+        for courses in self.get_courses():
+            if courses.name == _course:
+                for user in courses.get_users():
+                    splitName = user.name.split()
+                    names[user.id] = splitName[1].lower() + splitName[0].lower()
         for assn in self.get_assignments(list(course.id for course in self.get_courses() if course.name == _course)[0]):
             if(assignment == assn.name):
+                allSubmissions = assn.get_submissions()
+                for subm in allSubmissions:
+                    for attch in subm.attachments:
+                        if (subm.late):
+                            submissionFile = requests.get(attch.url)
+                            open("submissions/" + str(names[subm.user_id]) + "_LATE_" + str(subm.user_id) + "_" + str(subm.assignment_id) + "_" + attch.filename, "wb").write(submissionFile.content)
+                        else:
+                            submissionFile = requests.get(attch.url)
+                            open("submissions/" + str(names[subm.user_id]) + "_" + str(subm.user_id) + "_" + str(subm.assignment_id) + "_" + attch.filename, "wb").write(submissionFile.content)
+                        shutil.make_archive("submissions", 'zip', subdir)
+                        print(attch.url)
                 return assn.submissions_download_url
-
     def download_submissions(self, _course, assignment, path): #Automatically download submissions.zip from a course assignment (course name, assignment name) to the given path
         for assn in self.get_assignments(list(course.id for course in self.get_courses() if course.name == _course)[0]):
             if(assignment == assn.name):
-                print(assn.submissions_download_url)
                 # Retrofit this code to actually authenticate
                 #r = requests.get(assn.submissions_download_url, auth=grade_csv_uploader.BearerAuth(self.canv_token))
                 #open(path, 'wb').write(r.content)
+
+                allSubmissions = assn.get_submissions()
+                for subm in allSubmissions:
+                    for attch in subm.attachments:
+                        print(attch.url)
                 
                 #this code works on matty's machine apparently,  but nowhere else
-                urllib.request.urlretrieve(assn.submissions_download_url, path)
+                #urllib.request.urlretrieve(assn.submissions_download_url, path)
 
 
     def push_grades(self, _course, assignment, path): #Push grades to Canvas assignment (course name, assignment name) using the summary.csv from the given path
