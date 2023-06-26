@@ -215,8 +215,7 @@ def main():
     elif choice == "Pull":
         print("-=- Fetching assignment download link w/ manual download mode enabled... -=-")
         dl_link = canvas.get_download_link(course_name, assn_name)
-        print("-=- Open the download link in your browser to download the assignment submissions -=-")
-        print(dl_link)
+        print("Downloaded successfully.")
         print("-=- Shutting down -=-")
 
 if __name__ == "__main__":
