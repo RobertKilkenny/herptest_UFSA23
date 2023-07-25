@@ -196,8 +196,10 @@ class CanvasWrapper:
                                     res[2] = float(res[2]) * (1 - (late_policy[-1] / 100))
                                 else:
                                     print("-=- No late policy specified. No points deducted for late submissions. -=-")
-
-                            print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + str(sub.score / assn.points_possible * 100) + "% to " + str(float(res[2])) + "%.")
+                            try:
+                                print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + str(sub.score / assn.points_possible * 100) + "% to " + str(float(res[2])) + "%.")
+                            except:
+                                print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + "no grade" + " to " + str(float(res[2])) + "%.")
                             sub.edit(
                                 comment = {
                                     #Have commented when testing or a lot of comments will appear :(
