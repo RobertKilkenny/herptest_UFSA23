@@ -94,18 +94,6 @@ class CanvasWrapper:
                     splitName = user.name.split()
                     names[user.id] = splitName[1].lower() + splitName[0].lower()
         for assn in self.get_assignments(list(course.id for course in self.get_courses() if course.name == _course)[0]):
-            if(assignment == assn.name):
-                allSubmissions = assn.get_submissions()
-
-                try:
-                    if(assn.use_rubric_for_grading):
-                        print("Downloading Grading rubric")
-                        test = assn.rubric
-                    else:
-                        print("Does not use a rubric for grading")
-                except:
-                    print("Does not use a rubric for grading")
-
                 for subm in allSubmissions:
                     for attch in subm.attachments:
                         submissionFile = requests.get(attch.url)
@@ -163,16 +151,20 @@ class CanvasWrapper:
                 if assn.use_rubric_for_grading:
                     criterion = {}
                     rating_dict = {}
+                    # print("test:", assn.rubric[:1])
                     for section in assn.rubric:
+                        ratings = {}
                         for rating in section["ratings"]:
-                            rating_dict[section['id']] = {float(rating["points"]): rating["id"]}
+                            ratings[float(rating["points"])] = rating["id"]
+                        rating_dict[section['id']] = ratings
 
+                        grading_value = 0
                         criterion[section['id']] = {
-                            'rating_id': rating_dict[section['id']][float(0)],
-                            'points': 0,
-                            'comments': "Testing Rubric comments"
+                            'rating_id': rating_dict[section['id']][grading_value],
+                            'points': section["points"]
                         }
 
+                temp_id = 0
                 for sub in assn.get_submissions():
                     for res in results:
                         if(str(sub.user_id) == res[1]):
@@ -188,40 +180,106 @@ class CanvasWrapper:
                                 else:
                                     print("-=- No late policy specified. No points deducted for late submissions. -=-")
 
-                            print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + str(sub.score / assn.points_possible * 100) + " to " + str(float(res[2])) + ".")
-                            sub.edit(
-                                comment = {
-                                    #Have commented when testing or a lot of comments will appear :(
-                                    'text_comment' : "HELP ME"
-                                },
-                                submission = {
-                                    'posted_grade' : str(res[2]) + "%"
-                                }
-                            )
                             course = None
                             for test_course in self.get_courses():
                                 if test_course.name == _course:
                                     course = test_course
+                                    does_folder_exist =False
+                                    for folder in course.get_folders():
+                                        if folder.name == "Assignments":
+                                            does_folder_exist = True
+                                            cursor = folder
+                                            # print("assignment position is:", cursor.position)
+                                    if not does_folder_exist:
+                                        print("Warning: No 'Assignments' folder detected; student summary files will save in unfiled on canvas")
+                                        cursor = course
+
+                                    does_folder_exist = False
+                                    for folder in course.get_folders():
+                                        if folder.name == assn.name:
+                                            does_folder_exist = True
+                                            cursor = folder
+                                            # print("\nFound folder in:", cursor, "\n")
+                                    if not does_folder_exist:
+                                        cursor = cursor.create_folder(assn.name, hidden=True)
+
+                                    # print("Files in Assignment Grades Folder:")
+                                    # for file in cursor.get_files():
+                                    #     print("*", file.display_name)
+                                    # print("\n")
+
                             if course == None:
-                                print("Error: valid course could not be found (Check around line 130)!!")
+                                print("Error: valid course could not be found (Check around line 192)!!")
                             else:
+                                print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + str(sub.score / assn.points_possible * 100) + " to " + str(float(res[2])) + ".")
                                 if assn.use_rubric_for_grading:
-                                    rubric = RubricAssessment(self.canv_url, {
-                                        'id': counter,
-                                        'bookmarked' : True,
+                                    # print(*assn.rubric)
+                                    # print(assn.rubric_settings['id'])
+                                    rubric_assess = RubricAssessment(self.canv_url, {
+                                        'id': temp_id,
+                                        'bookmarked' : False,
                                         'artifact_type': "Submission",
                                         'rubric_assessment': {
-                                            'user_id': 1267749,
                                             'assessment_type': "grading"
                                         }
                                     })
-                                    counter = counter + 1
-                                    rubric.rubric_assessment.update(criterion)
-                                    print("checking rubric:", assn.rubric_settings)
+                                    temp_id = temp_id + 1
+
+                                    # Change Criterion to match the student's performance
+                                    csv_path = os.getcwd() + "/Results/"
+                                    for file in os.listdir(csv_path):
+                                        # Look for files ending with .txt
+                                        if file.endswith(str(sub.user_id)):
+                                            csv_path = csv_path + file + "/result.csv"
+                                            # sub.upload_comment(csv_path)
+
+                                    results = []
+                                    with open(csv_path, 'r') as _summary:
+                                        csv_reader = reader(_summary)
+                                        for i in range(0,3):
+                                            next(csv_reader)
+                                        test_count = int(float(next(csv_reader)[0].split(": ")[1]))
+                                        next(csv_reader)
+                                        next(csv_reader)
+
+                                        for i in range(0,test_count):
+                                            results.append(float((next(csv_reader)[1].split("%")[0])))
+
+                                    counter = 0
+                                    # print("\nCriterion sent to Canvas:")
+                                    for section in assn.rubric:
+                                        criterion[section['id']] =  {
+                                            'points' : section['points'] * results[counter] / 100,
+                                            'rating_id' : rating_dict[section['id']][criterion[section['id']]['points']],
+                                            'comments' : ""
+                                        }
+                                        # print("*", criterion[section['id']]['points'], "=", criterion[section['id']]['rating_id'],
+                                        #       "and says:", criterion[section['id']]['comments'])
+                                        counter = counter + 1
+
+                                    rubric_assess.rubric_assessment.update(criterion)
+                                    # print(rubric_assess.rubric_assessment)
+                                    # print("checking rubric:", assn.rubric_settings)
                                     sub.edit(
-                                        rubric_assessment={rubric}
+                                        comment={
+                                            # Have commented when testing or a lot of comments will appear :(
+                                            # 'text_comment' : "Please see attached file."
+                                        },
+                                        submission={
+                                            'posted_grade': str(res[2]) + "%"
+                                        },
+                                        rubric_assessment={rubric_assess}
                                     )
-                                    print(rubric.rubric_assessment)
+                                else:
+                                    sub.edit(
+                                        comment={
+                                            # Have commented when testing or a lot of comments will appear :(
+                                            # 'text_comment' : "Please see attached file."
+                                        },
+                                        submission={
+                                            'posted_grade': str(res[2]) + "%"
+                                        }
+                                    )
                                     
     def get_courses_this_semester(self) -> dict:
         """
