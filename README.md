@@ -42,6 +42,8 @@
       - [Push](#push)
     - [Elma](#elma)
     - [Herp](#herp)
+    - [Moss](#moss)
+      - [Directories](#directories)
 - [Project Structure](#project-structure)
     - [HerpTest Toolbox (herptest.toolbox)](#herptest-toolbox-herptesttoolbox)
     - [Extracting LMS Archives (elma)](#extracting-lms-archives-elma)
@@ -178,7 +180,32 @@ Run `'herp'` in the `root` directory of the test suite
 
 <br>
 
+
+
 After running `'herp'`, the `Build` and `Results` directories will be created. The `Results` directory will contain the `summary.csv` along with directories for each graded student. Each student directory will contain a `result.csv` with information of their test case performance for a test suite.
+
+<br>
+
+## Moss
+
+<br>
+
+`'moss'` needs a programming language provided (i.e. python) as an argument.
+
+> **ATTN:**
+> Two directories must be provided!
+
+> **Note:**
+> By default `basefiles` and `submissions` are set
+
+<br>
+
+### Directories
+* `Basefiles` - a directory that holds instructor provided source files which has code that will be omitted in the similarity check
+* `Submissions` - a directory that holds the student submissions which will be subject to similarity checks
+
+> **Note**
+> It is strongly suggested to use `elma` to extract students submissions from an LMS archive to a `submissions` directory
 
 <br><br>
 
@@ -188,7 +215,7 @@ This package includes three primary tools:
 - `herptest.toolbox`: Standardized / Cross-platform function calls.
 > (Currently only library loading)
 - `elma`: (E)xtract (LM)S (A)rchive - A command line tool to extract student submissions.
-> (Support is limited to Canvas)
+> (Support is currently limited to Canvas)
 - `herp`: A command line tool to run a project test suite as specified by the user.
 - `herp-gui`: a GUI tool that interfaces with the CLI herptest functions
 - `herp-canvas`: a CLI interface to Canvas in order to push/pull student submissions
