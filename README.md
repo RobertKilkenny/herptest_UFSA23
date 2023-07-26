@@ -54,6 +54,7 @@
 - [Under the Hood](#under-the-hood)
     - [Config Class](#config-class)
     - [Test Set Class](#test-set-class)
+- [Upload](#upload)
 - [License](#license)
 - [Credits](#credits)
 
@@ -200,12 +201,44 @@ After running `'herp'`, the `Build` and `Results` directories will be created. T
 
 <br>
 
+After `moss` is ran, a `report.html` file should be created in the current directory. Opening this in a web browser (i.e Google Chrome, Firefox, Microsoft Edge) will display any similarities found in the `submissions` directory.
+
+<br>
+
 ### Directories
 * `Basefiles` - a directory that holds instructor provided source files which has code that will be omitted in the similarity check
 * `Submissions` - a directory that holds the student submissions which will be subject to similarity checks
 
-> **Note**
-> It is strongly suggested to use `elma` to extract students submissions from an LMS archive to a `submissions` directory
+> **ATTN:**
+> There must be _`at least one source file`_ in the `basefiles` directory that is _`not empty`_. Lastly, the student source files **`must have the same name as the base source file`** in separate student directories within the `submissions` directory.
+
+> **Note:**
+> It is strongly suggested to use `elma` to extract students submissions from an LMS archive to a `submissions` directory. Also, there **`must be at least two student submissions`** for there to be any meaningful similarity checks.
+
+<br>
+
+```bash
+.
+├── basefiles
+│   ├── a01-base.py
+│   ├── b01-base.py
+│   └── c01-base.py
+└── submissions
+    ├── sample_01
+    │   └── a01-submission.py
+    ├── sample_02
+    │   └── a02-submission.py
+    ├── sample_03
+    │   └── a03-submission.py
+    ├── sample_04
+    │   └── b01-submission.py
+    ├── sample_05
+    │   └── b02-submission.py
+    ├── sample_06
+    |   └── c01-submission.py
+    └── sample_07
+        └── c02-submission.py
+```
 
 <br><br>
 
@@ -295,8 +328,10 @@ The `herp-gui` command will initiate the gui for herptest.
 > **ATTN:**
 > Additional OS packages may need to be installed (especially for a newly installed WSL2)
 
-```
-sudo apt-get install '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
+```bash
+# Install OS dependencies
+
+sudo apt install '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
 ```
 
 <br></br>
@@ -492,9 +527,17 @@ TestSet has the following properties:
   set_penalties:  test-set penalties as a list of tuples (name, fraction, function) (readonly)
   max_penalty:    maximum overall penalty that can be applied to the score (readonly)
 ```
-  
-Called after building the framework. It should return any framework_context that is important to properly shutdown /--
 
+<br></br>
+
+  
+# Upload
+
+```bash
+# Upload Module to PyPi
+
+twine upload dist/herptest-<version>.tar.gz
+```
 
 <br></br>
 
