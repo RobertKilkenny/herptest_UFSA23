@@ -191,13 +191,15 @@ class CanvasWrapper:
                                 # Converts Canvas late info (in seconds) into day value then compares with late policy input list
                                 days_late = math.ceil(sub.seconds_late/86400.0)
                                 if days_late < len(late_policy):
-                                    res[2] = float(res[2]) - (late_policy[days_late - 1])
+                                    res[2] = float(res[2]) * (1 - (late_policy[days_late - 1] / 100))
                                 elif len(late_policy) != 0:
-                                    res[2] = float(res[2]) - (late_policy[-1])
+                                    res[2] = float(res[2]) * (1 - (late_policy[-1] / 100))
                                 else:
                                     print("-=- No late policy specified. No points deducted for late submissions. -=-")
-
-                            print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + str(sub.score / assn.points_possible * 100) + " to " + str(float(res[2])) + ".")
+                            try:
+                                print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + str(sub.score / assn.points_possible * 100) + "% to " + str(float(res[2])) + "%.")
+                            except:
+                                print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + "no grade" + " to " + str(float(res[2])) + "%.")
                             sub.edit(
                                 comment = {
                                     #Have commented when testing or a lot of comments will appear :(
@@ -452,13 +454,25 @@ def main():
         exit(-1)
     else:	
         canvas_type = input("Would you like to upload to Live Canvas or Canvas Beta? {Choices: Live, Beta} ")	
-        if canvas_type == "Live" or canvas_type == "live":	
-            canvas = CanvasWrapper(PRODUCTION_URL,DOT_ENV_PATH,user_type,PRODUCTION_TOKEN_TYPE)	
-            print("Starting CSV Uploader With Parameters -> API_URL:",PRODUCTION_URL,"-> DOT_ENV: ",DOT_ENV_PATH,"-> TOKEN_TYPE:",PRODUCTION_TOKEN_TYPE)	
-        elif canvas_type == "Beta" or canvas_type == "beta":	
-            canvas = CanvasWrapper(BETA_URL,DOT_ENV_PATH,user_type,BETA_TOKEN_TYPE)	
-            print("Starting CSV Uploader With Parameters -> API_URL:",BETA_URL,"-> DOT_ENV:",DOT_ENV_PATH,"-> TOKEN_TYPE:",BETA_TOKEN_TYPE)	
-        else:	
+        if canvas_type == "Live" or canvas_type == "live":
+            try:
+                canvas = CanvasWrapper(PRODUCTION_URL,DOT_ENV_PATH,user_type,PRODUCTION_TOKEN_TYPE)
+            except:
+                print(f"| Canvas Wrapper Object failed to be created. Either your API key is invalid or you have no courses as a {user_type}.")
+                print("| Hint: try using --setupenv to set up your environment variables.")
+                print("└─> exiting with error")
+                exit(-1)
+            print("Starting CSV Uploader With Parameters -> API_URL:",PRODUCTION_URL,"-> DOT_ENV: ",DOT_ENV_PATH,"-> TOKEN_TYPE:",PRODUCTION_TOKEN_TYPE)
+        elif canvas_type == "Beta" or canvas_type == "beta":
+            try:
+                canvas = CanvasWrapper(BETA_URL,DOT_ENV_PATH,user_type,BETA_TOKEN_TYPE)
+            except:
+                print(f"| Canvas Wrapper Object failed to be created. Either your Beta API key is invalid or you have no courses as a {user_type}.")
+                print("| Hint: try using --setupenv to set up your environment variables.")
+                print("└─> exiting with error")
+                exit(-1)
+            print("Starting CSV Uploader With Parameters -> API_URL:",BETA_URL,"-> DOT_ENV:",DOT_ENV_PATH,"-> TOKEN_TYPE:",BETA_TOKEN_TYPE)
+        else:
             print("| InputError: Your input does not match one of the chosen types.")	
             print("└─> exiting with error")	
             exit(-1)
@@ -469,7 +483,7 @@ def main():
         courses = canvas.get_courses()
         print(courses[0])
     except:
-        print(f"| Canvas Util Object failed to be created. Either your API key is invalid or you have no courses as a {user_type}.")
+        print(f"| Canvas Wrapper Object failed to be created. Either your API key is invalid or you have no courses as a {user_type}.")
         print("| Hint: try using --setupenv to set up your environment variables.")
         print("└─> exiting with error")
         exit(-1)
@@ -495,6 +509,10 @@ def main():
     for assn in assignments:
         print(f"{temp_count}. {assn.name}")
         temp_count = temp_count + 1
+    if temp_count == 0:
+        print("| There exist no assignments in this course. Assignments must be added on Canvas to use this course.")
+        print("└─> exiting with error")
+        exit(-1)
 
     print("-=- Which assignment are you choosing? {Enter Number, 0 indexed} -=-")
     index_choice = input()
@@ -523,7 +541,8 @@ def main():
     if choice == "Push":
         print("-=- Enter the relative path for your summary.csv file in your Test Suite's 'Results' folder {If on WSL, remember to use mounted drives and linux formatted paths} -=-")
         submission_path = input()
-        print("-=- Specify late policy (enter a single-space separated list for total point deductions each day late (starting at 1 day late)) -=-")
+        print("-=- Specify late policy (enter a single-space separated list for total %point deductions for each day late, starting at 1 day late). -=-")
+        print("-=- Canvas accepts negative deductions and grades >100% and <0%. -=-")
         # Turns user input from spaced ints into list (ex. input: "10 20 30 60" becomes [10, 20, 30, 60])
         invalid_policy = True
         while invalid_policy:
