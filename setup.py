@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='herptest',
-    version='0.9.9.5',
+    version='0.9.9.7',
     packages=['herptest',],
     url='https://github.com/RobertKilkenny/herptest_UFSA23',
     license='GPL 3',

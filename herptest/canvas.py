@@ -1,5 +1,5 @@
 import math
-import os
+import os, pathlib
 import shutil
 from canvasapi import Canvas
 from canvasapi.rubric import RubricAssessment
@@ -439,13 +439,21 @@ def main():
     # consts that can be swapped out if changing use case.
     PRODUCTION_URL = "https://ufl.instructure.com" # Canvas Production is live Canvas where changes will be applied to students.
     BETA_URL = "https://ufl.beta.instructure.com" # Canvas Beta is for testing changes that won't apply to courses yet.
-    DOT_ENV_PATH = "canvas.env" 
+    canvasLoc = str(pathlib.Path(__file__).parent.absolute())
+    DOT_ENV_PATH = canvasLoc + "/canvas.env" 
     PRODUCTION_TOKEN_TYPE = "TOKEN"
     BETA_TOKEN_TYPE = "BETA_TOKEN"
 
     arg_config = parse_arguments()
     if arg_config.setupenv == True:
         env_setup()
+    if not os.path.exists(DOT_ENV_PATH):
+        print(f" There doesn't seem to be an API Key Stored.")
+        print("| Hint: try using --setupenv to set up your environment variables.")
+        print("└─> exiting with error")
+        exit(-1)
+
+    print("Canvas env Location: " + DOT_ENV_PATH)
     
     user_type = input("Are you using Canvas as a Teacher or a TA? {Choices: teacher, ta} ")	
     if user_type != "teacher" and user_type != "ta":

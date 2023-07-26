@@ -1,5 +1,5 @@
 from PySide2 import QtCore, QtWidgets, QtGui
-import os, subprocess
+import os, subprocess, pathlib
 import numpy as np
 import pyautogui
 from herptest import grade_csv_uploader, canvas, env_dialog
@@ -101,11 +101,13 @@ class AbstractCanvasInterface(QtWidgets.QWidget):
         self.canvasWrapper = None
         self.canvasPath = "https://ufl.instructure.com/api/v1"
         self.canvasBasePath = "https://ufl.instructure.com"
-        self.dotEnvPath = "canvas.env"
+        canvasLoc = str(pathlib.Path(__file__).parent.absolute())
+        self.dotEnvPath = canvasLoc + "/canvas.env"
         self.tokenType = "TOKEN"
         self.established = False
         self.userType = user_type
         try:
+
             self.canvasWrapper = canvas.CanvasWrapper(self.canvasBasePath, self.dotEnvPath, self.userType)
         except:
             print("Something went wrong, either the canvas.env does not exist or it does not contain a token with the type TOKEN")

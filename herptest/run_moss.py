@@ -1,5 +1,5 @@
 from herptest.moss import MossUtil
-import os
+import os, pathlib
 from herptest.moss_wrapper import MossEnvWrapper
 import argparse
 import sys
@@ -42,17 +42,19 @@ def main():
         env_setup()
     
     # create moss object
-    moss_obj = MossUtil("moss.env")
+    mossLoc = str(pathlib.Path(__file__).parent.absolute())
+    moss_obj = MossUtil(mossLoc + "/moss.env")
+    print("Moss Location: " + mossLoc + "/moss.env")
 
     # check args for necessary (required) arguments
     if arg_config.language != None:
-        moss_obj.init_moss("python")
+        moss_obj.init_moss(arg_config.language)
     else:
         raise ValueError("No Language Provided")
 
     # checks args for basefiles and submissions locations
     if arg_config.basefiles != None and arg_config.submissions != None:
-        moss_obj.add_files("basefiles","submissions")
+        moss_obj.add_files(arg_config.basefiles, arg_config.submissions)
     
     # sends files and saves logs locally from moss
     moss_obj.send_files()
