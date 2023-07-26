@@ -26,6 +26,7 @@
 
 <!-- Static Badge -->
 <!--
+[![Static Badge](https://img.shields.io/badge/license-GPL--3.0-orange)](https://github.com/RobertKilkenny/herptest_UFSA23/blob/master/LICENSE)
 -->
 
 <!-- Dynamic Badge(s)
@@ -49,6 +50,10 @@
     - [Extracting LMS Archives (elma)](#extracting-lms-archives-elma)
     - [Running Unit Test Suite (herp)](#running-unit-test-suite-herp)
     - [Graphical Interface (herp-gui)](#graphical-interface-herp-gui)
+      - [Run HerpTest](#run-herptest-herp-gui)
+      - [Test Results](#test-results-herp-gui)
+      - [Canvas Uploader](#canvas-uploader-herp-gui)
+      - [Auto-Pull & ELMA](#auto-pull-&-ELMA-herp-gui)
     - [HerpTest Canvas Interface (herp-canvas)](#herptest-canvas-interface-herp-canvas)
     - [Measure Of Software Similarity (moss)](#measure-of-software-similarity-moss)
 - [Under the Hood](#under-the-hood)
@@ -85,15 +90,18 @@ herp -V
 > It is suggested to create a python `venv` before installing the module
 
 > **Note:**
-> `"<version>"` is a number in the format `[0.MAJOR.MINOR.PATCH]`
+> `"<version>"` is a number in the format `[0.#.#.##]`
 
+> **ATTN:**
+> It is suggested to create a python `venv` before installing the module
 <!-- >> `"<version>"` is a number in the format `[0.MAJOR.MINOR.PATCH]` -->
 <br></br>
 
 # Getting Started
+Type `'herp'` in the `root` directory of the below file structure via the terminal
 
 A general workflow when using `herptest` is as follows:
-1.  Pull Student submissions from the LMS [`herp-canvas`]
+1. Pull Student submissions from the LMS [`herp-canvas`]
 2. Extract the submissions from the LMS archive to a submissions directory [`elma`]
 3. Evaluate the submissions through a test suite [`herp`]
 4. Check for indications of student-to-student plagiarism [`moss`]
@@ -144,7 +152,7 @@ A general workflow when using `herptest` is as follows:
 
 <br>
 
-> If the `pull` option is selected, a `submissions` directory and LMS archive file (i.e. submissions.zip) will be created.
+> If the `pull` option is selected, a `submissions` directory and LMS archive file (i.e. submissions.zip) will be created at the current directory. A relative path can be provided to change the location the 'submissions' directory is made.
 
 <br>
 
@@ -154,6 +162,9 @@ A general workflow when using `herptest` is as follows:
 
 > If the `push` option is selected, the _relative_ or _absolute_ path to a `summary.csv` file must be provided to push grades to canvas.
 
+'Push' gives you the option to set a late policy to be applied to the scores within the selected 'summary.csv' file. To create a valid late policy, enter in a space separated list of float values that correspond to the percent grade deducation per day late of the submission. Ex. [10 20 30] represents that an assignment will be deducted 10% for being one day late, 20% for two days, and 30% for three or more days. [10a b 4] is an invalid late policy and you will be prompted to enter a valid policy before grades can be submitted. 
+
+Note: The late policy field accepts negative and >100 values. If no text is entered in the field, no points will be deducted for late submissions (equivalent to a [0 0 0 ...] entry).
 
 <br>
 
@@ -243,7 +254,7 @@ After `moss` is ran, a `report.html` file should be created in the current direc
 <br><br>
 
 # Project Structure
-This package includes three primary tools:
+This package includes six primary tools:
 
 - `herptest.toolbox`: Standardized / Cross-platform function calls.
 > (Currently only library loading)
@@ -325,6 +336,12 @@ options:
 
 The `herp-gui` command will initiate the gui for herptest.
 
+The herp gui has four tabs which contain the functionality of the 'herp', 'elma', and 'herp-canvas'. They are as follows:
+1. [Run HerpTest](#run-herptest-herp-gui)
+2. [Test Results](#test-results-herp-gui)
+3. [Canvas Uploader](#canvas-uploader-herp-gui)
+4. [Auto-Pull & ELMA](#auto-pull-&-ELMA-herp-gui)
+
 > **ATTN:**
 > Additional OS packages may need to be installed (especially for a newly installed WSL2)
 
@@ -333,6 +350,67 @@ The `herp-gui` command will initiate the gui for herptest.
 
 sudo apt install '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
 ```
+
+<br></br>
+
+### Run HerpTest (`herp-gui`)
+
+The 'Run HerpTest' tab mimics the funcionality of the 'herp' CLI command, taking in test suite and submissions paths as arguments and outputting the resulting grades.
+
+Steps to run:
+1. Change the first path to the test suite directory using the "Browse" button (i.e. test_area).
+2. Change the path to the Project directory using the "Browse" button (i.e. test_area/Projects).
+3. Click on the "Run Tests" button.
+
+The center box will display the 'herp' command running as it would in the command line, providing updates on submissions as they are graded.
+
+You can view the test results either by selecting the "Open Results" button or the "Test Results" tab.
+
+<br></br>
+
+### Test Results (`herp-gui`)
+
+The 'Test Results' tab displays each result generated from running a test suite and a set of test statistics that describe the scores of every submission.
+
+To load the submission data, use the "Browse" button to select the generated summary.csv file and then press the "Load" button.
+
+By selecting an entry in the Show Details column in a populated Test Results, you can view the individual scores for each test in the test suite.
+
+Additional statistics for the test suite can also be viewed in the Test Statistics section. The following statistics for scores are shown: mean, highest, lowest, median, 1st quartile, 2nd quartile, 3rd quartile, standard deviation.
+
+<br></br>
+
+### Canvas Uploader (`herp-gui`)
+
+The 'Canvas Uploader' tab allows for test suite results to be uploaded to Canvas as grades for each student submission.
+
+To use, first go to the "List of Courses" field, and select "Expand ->" for the desired course. In the Assignments for "Course Name" field, you can either return to the "List of Courses" field by selecting "<- Return to Courses" or you can select on any of the visible assignments in the course.
+
+After selecting an assignment, click on the "Browse" button and choose the path corresponding to the 'summary.csv' file generated by 'herp' for the selected assignment. 
+
+'Canvas Uploader' gives you the option to set a late policy to be applied to the scores within the selected 'summary.csv' file. To enter a valid late policy, select the "Specify late policy" field and enter in a space separated list of float values that correspond to the percent grade deducation per day late of the submission. Ex. [10 20 30] represents that an assignment will be deducted 10% for being one day late, 20% for two days, and 30% for three or more days. [10a b 4] is an invalid late policy and you will be prompted to enter a valid policy before grades can be submitted. 
+
+Note: The late policy field accepts negative and >100 values. If no text is entered in the field, no points will be deducted for late submissions (equivalent to a [0 0 0 ...] entry).
+
+Note: The summary.csv should be located in the Results directory (i.e. test_area/Results) after the test suite directory after the test suite was ran.
+
+Clicking the "Upload" button will upload the grades to Canvas for the selected assignment/submissions.
+
+Note: The Upload button will not be clickable until a summary.csv file is selected.
+
+<br></br>
+
+### Auto-Pull & ELMA (`herp-gui`)
+
+The 'Auto-Pull & ELMA' tab allows for the Canvas submissions for any course assignment to be downloaded and then converted into a usable format by herp via the 'elma' command.
+
+To use, first go to the "List of Courses" field, and select "Expand ->" for the desired course. In the Assignments for "Course Name" field, you can either return to the "List of Courses" field by selecting "<- Return to Courses" or you can select on any of the visible assignments in the course. (same as 'Canvas Uploader')
+
+After selecting an assignment, click on "Download Submissions for Selected Assignments" in order to pull the submission from Canvas into the selected path chosen via the "Browse" button (defaults to current directory).
+
+The submissions from the assignment will be downloaded both into a directory labeled 'submissions' and as a zip file labeled 'submissions'.
+
+To convert these submissions into a usable format, use the "Browse" buttons by the "ELMA Source File" and "ELMA Destination" fields to select the locations of the "submissions.zip" file and the test suite projects folder, respectively. Clicking on "Run ELMA on the Selected ZIP Archive" will run the 'elma' command based on these specfications.
 
 <br></br>
 
@@ -530,8 +608,8 @@ TestSet has the following properties:
 
 <br></br>
 
-  
 # Upload
+Called after building the framework. It should return any framework_context that is important to properly shutdown /--
 
 ```bash
 # Upload Module to PyPi
@@ -556,8 +634,8 @@ HerpTest is licensed under the terms of the GPL Open Source license and is avail
 # Credits
 ```
 Team Suite Life - CIS 4930 - Python Term Project
-- Jack
-- Robert
+- Jack Kilkenny
+- Robert Mezardieu
 - Lunafreya Nyugen
 - Renee Kaynor
 
