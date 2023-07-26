@@ -157,10 +157,15 @@ class AutopullElmaPage(canvas_interface.AbstractCanvasInterface):
         self.downloadStatus.repaint()
 
         try:
-            self.canvasWrapper.download_submissions(self.currentCourse, self.currentAssignment, self.downloadDest.text() + "/submissions.zip")
+            path = str(self.downloadDest.text())
+            self.canvasWrapper.get_download_link(self.currentCourse, self.currentAssignment, path)
             self.downloadStatus.setText("Status: Download complete")
             self.downloadStatus.setStyleSheet("color: black")
             self.elmaSource.setText(self.downloadDest.text() + "/submissions.zip")
+            success_dialog = QtWidgets.QMessageBox()
+            success_dialog.setText('Submissions successfully downloaded!')
+            success_dialog.setWindowTitle('Success!')
+            success_dialog.exec_()
         except:
             print("inside except")
             self.downloadStatus.setText("Status: Error during download")
@@ -171,7 +176,7 @@ class AutopullElmaPage(canvas_interface.AbstractCanvasInterface):
     def handleDownloadManual(self):
         #this method uses the method of opening the weblink with cmd :)
         # cmd.exe /C start http://localhost
-
+        path = str(self.downloadDest.text())
         link = self.canvasWrapper.get_download_link(self.currentCourse, self.currentAssignment)
         process = subprocess.Popen(['cmd.exe', '/C', 'start', link], stdout=subprocess.PIPE)
         return_code = None
