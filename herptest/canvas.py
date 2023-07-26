@@ -1,5 +1,5 @@
 import math
-import os
+import os, pathlib
 import shutil
 from canvasapi import Canvas
 from canvasapi.rubric import RubricAssessment
@@ -9,9 +9,6 @@ import requests, urllib.request
 import sys
 import argparse
 from herptest.env_wrapper import EnvWrapper
-
-# For testing purposes- turn off when not testing
-testStudent = True
 
 class Rubric:
     def __init__(self):
@@ -29,6 +26,7 @@ class Rubric:
                 self.id = ""
 
 
+
 class Student:
     def __init__(self):
         self.last_name = ""
@@ -43,32 +41,41 @@ class Student:
         print(f"Grade: {self.last_name}")
         print(f"Rubric: {self.rubric}")
 
-class CanvasWrapper:
-    def __init__(self, API_URL, env_path, user_type, token_type="TOKEN"): #Initializes CanvasWrapper object which stores an authenticated CanvasAPI Canvas object
+
+class CanvasWrapper:    
+    #Initializes CanvasWrapper object which stores an authenticated CanvasAPI Canvas object
+    def __init__(self, API_URL, env_path, user_type, token_type="TOKEN"):
         self.canv_url = API_URL
         load_dotenv(env_path)
         self.canv_token = os.getenv(token_type)
         self.canv = Canvas(API_URL, self.canv_token)
         self.userType = user_type
 
-    # Leave as tbd for later okay Luna	
-    # def get_courses(self): #Get all courses with enrollment type of whatever is passed in	
-    #     return self.canv.get_courses(enrollment_type=self.userType)	
-    def get_courses(self): #Get all courses with enrollment type of teacher
-        # return self.canv.get_courses(enrollment_type='teacher')	
-        return self.canv.get_courses(enrollment_state='active', enrollment_type=self.userType)
-    
-    def get_assignments(self, course): #Get all assignments in a course using the passed in course ID
-        return self.canv.get_course(course).get_assignments()
-    #equivalent to get_assignment_list
 
-    def get_students(self, course): #Get all students in a course using the passed in course ID
+
+    # Chosen by User at boot (options are 'teacher' and 'ta') 
+    def get_courses(self):
+        return self.canv.get_courses(enrollment_type=self.userType)
+    
+
+
+    #Get all assignments in a course using the passed-in course ID
+    def get_assignments(self, course):
+        return self.canv.get_course(course).get_assignments()
+
+
+
+    #Get all students in a course using the passed in course ID
+    def get_students(self, course):
         students = []
         for student in self.canv.get_course(course).get_users(enrollment_type='student'):
             students.append(student.name.split(' ') + [student.id])
         return students
 
-    def get_results(self, path): #Get the results CSV in the format [['studentname', student_ID, grade]]
+
+
+    #Get the results CSV in the format [['studentname', student_ID, grade]]
+    def get_results(self, path):
         results = []
         with open(path, 'r') as _summary:
             csv_reader = reader(_summary)
@@ -79,7 +86,9 @@ class CanvasWrapper:
         return results
 
 
-    def get_download_link(self, _course, assignment): #Get submissions.zip download link from a given course assignment using the passed in course name and assignment name
+
+    #Get submissions.zip download link from a given course assignment using the passed in course name and assignment name
+    def get_download_link(self, _course, assignment):
         # default directory- recreate if already exists
         subdir = os.getcwd() + "/submissions"
         if(os.path.exists(subdir)):
@@ -87,12 +96,15 @@ class CanvasWrapper:
         else:
             os.mkdir(subdir)
         # UserID : lastnamefirstname
+        # Create a dictionary of students' names and their student ID
         names = {1267749: 'studenttest'}
         for courses in self.get_courses():
             if courses.name == _course:
                 for user in courses.get_users():
                     splitName = user.name.split()
                     names[user.id] = splitName[1].lower() + splitName[0].lower()
+
+        # After the library is created, get the correct assignment, and whether it needs a rubric
         for assn in self.get_assignments(list(course.id for course in self.get_courses() if course.name == _course)[0]):
                 for subm in allSubmissions:
                     for attch in subm.attachments:
@@ -108,23 +120,21 @@ class CanvasWrapper:
                         shutil.make_archive("submissions", 'zip', subdir)
                 return assn.submissions_download_url
             
-    def download_submissions(self, _course, assignment, path): #Automatically download submissions.zip from a course assignment (course name, assignment name) to the given path
+
+            
+    #Automatically download submissions.zip from a course assignment (course name, assignment name) to the given path
+    def download_submissions(self, _course, assignment, path):
         for assn in self.get_assignments(list(course.id for course in self.get_courses() if course.name == _course)[0]):
             if(assignment == assn.name):
-                # Retrofit this code to actually authenticate
-                #r = requests.get(assn.submissions_download_url, auth=grade_csv_uploader.BearerAuth(self.canv_token))
-                #open(path, 'wb').write(r.content)
-
                 allSubmissions = assn.get_submissions()
                 for subm in allSubmissions:
                     for attch in subm.attachments:
                         print(attch.url)
-                
-                #this code works on matty's machine apparently,  but nowhere else
-                #urllib.request.urlretrieve(assn.submissions_download_url, path)
 
 
-    def push_grades(self, _course, assignment, path, late_policy): #Push grades to Canvas assignment (course name, assignment name) using the summary.csv from the given path
+
+    #Push grades to Canvas assignment (course name, assignment name) using the summary.csv from the given path
+    def push_grades(self, _course, assignment, path, late_policy):
         try:
             results = self.get_results(path)
         except:
@@ -136,9 +146,6 @@ class CanvasWrapper:
             if(assignment == assn.name):
                 # Setting up rubric functionality
                 counter = 0
-                # print("\nFormat of rubric details:", *assn.rubric_settings, "\nID:", assn.rubric_settings["id"], "\n\n")
-                # print(*assn.rubric)
-
                 # Add attribute use_rubric_for_grading and set to False if not present (prevents exceptions)
                 try:
                     test = assn.use_rubric_for_grading
@@ -174,15 +181,18 @@ class CanvasWrapper:
                                 # Converts Canvas late info (in seconds) into day value then compares with late policy input list
                                 days_late = math.ceil(sub.seconds_late/86400.0)
                                 if days_late < len(late_policy):
-                                    res[2] = float(res[2]) - (late_policy[days_late - 1])
+                                    res[2] = float(res[2]) * (1 - (late_policy[days_late - 1] / 100))
                                 elif len(late_policy) != 0:
-                                    res[2] = float(res[2]) - (late_policy[-1])
+                                    res[2] = float(res[2]) * (1 - (late_policy[-1] / 100))
                                 else:
                                     print("-=- No late policy specified. No points deducted for late submissions. -=-")
 
-                            else:
-                                print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + str(sub.score / assn.points_possible * 100) + " to " + str(float(res[2])) + ".")
+                            try:
+                                print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + str(sub.score / assn.points_possible * 100) + "% to " + str(float(res[2])) + "%.")
+                            except:
+                                print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + "no grade" + " to " + str(float(res[2])) + "%.")
 
+                            else:
                                 # Send the result.csv to the student's account
                                 csv_path = path.split("/summary")[0]
                                 for file in os.listdir(csv_path):
@@ -252,6 +262,8 @@ class CanvasWrapper:
                 pass
         return result
 
+
+
     def get_section_ids(self, course_id: str) -> list:
         """
         Get a list of all section IDs in a specific course
@@ -263,6 +275,8 @@ class CanvasWrapper:
                         section_ids.append(section.id)
         return section_ids
 
+
+
     def get_assignment_id_by_name(self, course_id: str, assignment_name: str) -> str:
         """
         Get the id of the first assignment with a name that matches the input
@@ -272,8 +286,9 @@ class CanvasWrapper:
                 if str(assignment.name).lower().count(assignment_name.lower()):
                     print(f"| Found assignment: {assignment.name}")
                     return str(assignment.id)
-
         raise Exception("ERROR: No matching assignment found!")
+
+
 
     def get_assignment_list(self, course_id: str) -> dict:
         """
@@ -286,28 +301,32 @@ class CanvasWrapper:
 
         assignment_list = {}
         for assignment in assignments:
-            #print(f"| Found assignment: {assignment['name']},{assignment['id']}")
             assignment_list[assignment.name] = assignment.id
 
         if len(assignment_list) == 0:
             raise Exception("ERROR: No assignments found!")
-
+        
         return assignment_list
+    
+
 
     def get_student_ids_by_section(self, course_id: str, section_id: str, results: dict):
         """
         Get list of students from a particular section (by Canvas supplied Section ID) and store them in the dictionary
         """
-
         section = self.canv.get_course(course_id).get_section(section_id)
         student_ids = []
         if section.students is not None:
             for student in section.students:
                 results[str(student.name).lower()] = student.id
 
+
+
     def get_rubric_id(self, course_id: str, assignment_id: str) -> str:
         assignment = self.canv.get_course(course_id).get_assignment(assignment_id)
         return assignment.rubric_settings.id
+
+
 
     def generate_rubric(self, course_id: str, rubric_id: str) -> Rubric:
         result_rubric = Rubric()
@@ -328,8 +347,9 @@ class CanvasWrapper:
                 temp_criterion.ratings.append(temp_rating)
 
             result_rubric.criteria.append(temp_criterion)
-
         return result_rubric
+
+
 
     def populate_students_from_csv(self, csv_path: str) -> list:
         students = []
@@ -356,23 +376,19 @@ class CanvasWrapper:
                     students.append(student)
         return students
 
-    def upload_grades(self, course_id: str, user_ids: dict, assignment_id: str, students_from_file: list,
-                      rubric: Rubric):
-        counter = 0
 
+
+    def upload_grades(self, course_id: str, user_ids: dict, assignment_id: str, students_from_file: list, rubric: Rubric):
+        counter = 0
         for student in students_from_file:
             student_name = f"{student.first_name} {student.last_name}".lower()
 
             if student_name in user_ids:
-
                 content = self.canv.get_course(course_id).get_assignment(assignment_id).get_submission(user_ids[student_name])
 
                 # PROMPT WHEN OVERWRITING GRADES
                 if content.grade is not None:
                     print(f"{student_name}: grade not null!")
-                    # print("Confirm grade replacement with 'Y'.")
-                    # if input().lower() != 'y':
-                    #     sys.exit(0)
                     print(f"replacing grade of {student_name}")
 
                 payload = {}
@@ -391,10 +407,10 @@ class CanvasWrapper:
                     payload[f"rubric_assessment.{criterion.id}.rating_id"] = rating_id_chosen
 
                 self.canv.get_course(course_id).get_assignment(assignment_id).get_submission(user_ids[student_name]).edit(params=payload)
-
-
                 counter = counter + 1
                 print(f"{counter} student(s) graded.")
+
+
 
     def process_and_upload_file(self, course_id: str, assignment_name: str, csv_path: str):
         section_ids = self.get_section_ids(course_id)
@@ -410,11 +426,15 @@ class CanvasWrapper:
             self.upload_grades(course_id, user_ids, assignment_id, students_from_file, rubric_format)
         except:
             return -1
+        
+
+
 def env_setup():
     e = EnvWrapper()
     print("-=- Welcome to the Canvas API Key setup tool, you will be prompted to enter your Canvas key and your Canvas Beta key -=-")
     print("-=- If you only wish to use one of these keys, you can leave the other blank / submit any text. To reinstall, run this command again -=-")
     e.populate_env()
+
 
 
 def parse_arguments():
@@ -425,17 +445,27 @@ def parse_arguments():
     config.logformat = "%(message)s"
     return config
 
+
+
 def main():
     # consts that can be swapped out if changing use case.
     PRODUCTION_URL = "https://ufl.instructure.com" # Canvas Production is live Canvas where changes will be applied to students.
     BETA_URL = "https://ufl.beta.instructure.com" # Canvas Beta is for testing changes that won't apply to courses yet.
-    DOT_ENV_PATH = "canvas.env" 
+    canvasLoc = str(pathlib.Path(__file__).parent.absolute())
+    DOT_ENV_PATH = canvasLoc + "/canvas.env" 
     PRODUCTION_TOKEN_TYPE = "TOKEN"
     BETA_TOKEN_TYPE = "BETA_TOKEN"
 
     arg_config = parse_arguments()
     if arg_config.setupenv == True:
         env_setup()
+    if not os.path.exists(DOT_ENV_PATH):
+        print(f" There doesn't seem to be an API Key Stored.")
+        print("| Hint: try using --setupenv to set up your environment variables.")
+        print("└─> exiting with error")
+        exit(-1)
+
+    print("Canvas env Location: " + DOT_ENV_PATH)
     
     user_type = input("Are you using Canvas as a Teacher or a TA? {Choices: teacher, ta} ")	
     if user_type != "teacher" and user_type != "ta":
@@ -444,13 +474,25 @@ def main():
         exit(-1)
     else:	
         canvas_type = input("Would you like to upload to Live Canvas or Canvas Beta? {Choices: Live, Beta} ")	
-        if canvas_type == "Live" or canvas_type == "live":	
-            canvas = CanvasWrapper(PRODUCTION_URL,DOT_ENV_PATH,user_type,PRODUCTION_TOKEN_TYPE)	
-            print("Starting CSV Uploader With Parameters -> API_URL:",PRODUCTION_URL,"-> DOT_ENV: ",DOT_ENV_PATH,"-> TOKEN_TYPE:",PRODUCTION_TOKEN_TYPE)	
-        elif canvas_type == "Beta" or canvas_type == "beta":	
-            canvas = CanvasWrapper(BETA_URL,DOT_ENV_PATH,user_type,BETA_TOKEN_TYPE)	
-            print("Starting CSV Uploader With Parameters -> API_URL:",BETA_URL,"-> DOT_ENV:",DOT_ENV_PATH,"-> TOKEN_TYPE:",BETA_TOKEN_TYPE)	
-        else:	
+        if canvas_type == "Live" or canvas_type == "live":
+            try:
+                canvas = CanvasWrapper(PRODUCTION_URL,DOT_ENV_PATH,user_type,PRODUCTION_TOKEN_TYPE)
+            except:
+                print(f"| Canvas Wrapper Object failed to be created. Either your API key is invalid or you have no courses as a {user_type}.")
+                print("| Hint: try using --setupenv to set up your environment variables.")
+                print("└─> exiting with error")
+                exit(-1)
+            print("Starting CSV Uploader With Parameters -> API_URL:",PRODUCTION_URL,"-> DOT_ENV: ",DOT_ENV_PATH,"-> TOKEN_TYPE:",PRODUCTION_TOKEN_TYPE)
+        elif canvas_type == "Beta" or canvas_type == "beta":
+            try:
+                canvas = CanvasWrapper(BETA_URL,DOT_ENV_PATH,user_type,BETA_TOKEN_TYPE)
+            except:
+                print(f"| Canvas Wrapper Object failed to be created. Either your Beta API key is invalid or you have no courses as a {user_type}.")
+                print("| Hint: try using --setupenv to set up your environment variables.")
+                print("└─> exiting with error")
+                exit(-1)
+            print("Starting CSV Uploader With Parameters -> API_URL:",BETA_URL,"-> DOT_ENV:",DOT_ENV_PATH,"-> TOKEN_TYPE:",BETA_TOKEN_TYPE)
+        else:
             print("| InputError: Your input does not match one of the chosen types.")	
             print("└─> exiting with error")	
             exit(-1)
@@ -461,7 +503,7 @@ def main():
         courses = canvas.get_courses()
         print(courses[0])
     except:
-        print(f"| Canvas Util Object failed to be created. Either your API key is invalid or you have no courses as a {user_type}.")
+        print(f"| Canvas Wrapper Object failed to be created. Either your API key is invalid or you have no courses as a {user_type}.")
         print("| Hint: try using --setupenv to set up your environment variables.")
         print("└─> exiting with error")
         exit(-1)
@@ -487,6 +529,10 @@ def main():
     for assn in assignments:
         print(f"{temp_count}. {assn.name}")
         temp_count = temp_count + 1
+    if temp_count == 0:
+        print("| There exist no assignments in this course. Assignments must be added on Canvas to use this course.")
+        print("└─> exiting with error")
+        exit(-1)
 
     print("-=- Which assignment are you choosing? {Enter Number, 0 indexed} -=-")
     index_choice = input()
@@ -515,7 +561,8 @@ def main():
     if choice == "Push":
         print("-=- Enter the relative path for your summary.csv file in your Test Suite's 'Results' folder {If on WSL, remember to use mounted drives and linux formatted paths} -=-")
         submission_path = input()
-        print("-=- Specify late policy (enter a single-space separated list for total point deductions each day late (starting at 1 day late)) -=-")
+        print("-=- Specify late policy (enter a single-space separated list for total %point deductions for each day late, starting at 1 day late). -=-")
+        print("-=- Canvas accepts negative deductions and grades >100% and <0%. -=-")
         # Turns user input from spaced ints into list (ex. input: "10 20 30 60" becomes [10, 20, 30, 60])
         invalid_policy = True
         while invalid_policy:
@@ -534,6 +581,8 @@ def main():
         dl_link = canvas.get_download_link(course_name, assn_name)
         print("Downloaded successfully.")
         print("-=- Shutting down -=-")
+
+
 
 if __name__ == "__main__":
     main()

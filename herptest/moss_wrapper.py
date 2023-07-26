@@ -1,8 +1,9 @@
-import os
+import os, pathlib
 
 class MossEnvWrapper:
     def __init__(self):
         pass
+
 
 
     # modularized input function for env wrapper if needed for implemenation
@@ -15,17 +16,21 @@ class MossEnvWrapper:
         return self.input_checker
 
 
+
     # Populates the keys into moss.env permanently
     def populate_env(self):
-        with open('moss.env', 'w') as f:
+        mossLoc = str(pathlib.Path(__file__).parent.absolute())
+        with open(mossLoc + '/moss.env', 'w') as f:
             print("Enter Moss Token (USERID): ")
             self.moss_token = "USERID="+str(self.input_func()+"\n")
             f.write(self.moss_token),print("Moss token stored.")
 
 
+
     # Brings moss key into virtual env during runtime
     def read_env(self):
-        with open('moss.env','r') as c:
+        mossLoc = str(pathlib.Path(__file__).parent.absolute())
+        with open(mossLoc + '/moss.env','r') as c:
             for line in c.readlines():
                 try:
                     self.key,self.value = line.split('=')
@@ -34,6 +39,8 @@ class MossEnvWrapper:
                     pass
 
 
+
     # Clear the contents of the canvas.env
     def clear_env(self):
-        open('moss.env', 'w').close()
+        mossLoc = str(pathlib.Path(__file__).parent.absolute())
+        open(mossLoc + '/moss.env', 'w').close()

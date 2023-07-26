@@ -1,5 +1,5 @@
 from herptest.moss import MossUtil
-import os
+import os, pathlib
 from herptest.moss_wrapper import MossEnvWrapper
 import argparse
 import sys
@@ -16,6 +16,7 @@ def env_setup():
     m.populate_env()
 
 
+
 # handle command line args
 def parse_arguments():
     parser = argparse.ArgumentParser(description='A program to run Stanford moss on student submitted projects. Operates by taking in folder of base files and folders of submissions, positional arguemnts: language, basefiles, submissions')
@@ -30,6 +31,7 @@ def parse_arguments():
     return config
 
 
+
 # Driver function for run_moss, invokes necessary commands to run moss on submissions
 def main():
     print("-=- Running Stanford Moss CLI tool -=-")
@@ -40,21 +42,24 @@ def main():
         env_setup()
     
     # create moss object
-    moss_obj = MossUtil("moss.env")
+    mossLoc = str(pathlib.Path(__file__).parent.absolute())
+    moss_obj = MossUtil(mossLoc + "/moss.env")
+    print("Moss Location: " + mossLoc + "/moss.env")
 
     # check args for necessary (required) arguments
     if arg_config.language != None:
-        moss_obj.init_moss("python")
+        moss_obj.init_moss(arg_config.language)
     else:
         raise ValueError("No Language Provided")
 
     # checks args for basefiles and submissions locations
     if arg_config.basefiles != None and arg_config.submissions != None:
-        moss_obj.add_files("basefiles","submissions")
+        moss_obj.add_files(arg_config.basefiles, arg_config.submissions)
     
     # sends files and saves logs locally from moss
     moss_obj.send_files()
     moss_obj.save_files()
+
 
 
 if __name__ == "__main__":

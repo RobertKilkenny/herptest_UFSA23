@@ -10,7 +10,27 @@ def initEnviron():
     os.environ["XDG_RUNTIME_DIR"] = "/tmp/herp-runtime" #used by qt for cache
 def initWindow():
 
-    userType = pyautogui.confirm('View as a TA or a Teacher?', 'Select TA or Teacher', ['TA', 'Teacher']).lower()
+    userType = pyautogui.confirm('View as a TA or a Teacher?', 'Select TA or Teacher', ['TA', 'Teacher'])
+    if userType == None:
+        print("Role was not chosen!")
+        exit(-1)
+    else:
+        userType = userType.lower()
+
+
+    canvasLoc = str(pathlib.Path(__file__).parent.absolute())
+    if not os.path.exists(canvasLoc + "/canvas.env"):
+        apiKey = pyautogui.prompt(text="Please enter the Canvas API Key", title="Populate canvas.env")
+        
+        if apiKey == None or apiKey == '':
+            print("No API key was entered!")
+            exit(-1)
+        else:
+            with open(canvasLoc + "/canvas.env", "w") as f:
+                prod_token = "TOKEN=" + apiKey
+                f.write(prod_token), print("API Key Stored!")
+            print("Canvas env Location: " + canvasLoc + "/canvas.env")
+
 
     window = QtWidgets.QMainWindow()
     
@@ -19,16 +39,12 @@ def initWindow():
     #create all the tabs for the gui, save a reference to them, and add them to the tab creator
     tabContainer.addTab(homePage.HomePage(), "Run HerpTest")
     homePageInst = tabContainer.widget(0)
-    # tabContainer.addTab(testSuiteCreator.TestSuiteCreator(), "Create Test Suite")
-    # testSuiteCreatorInst = tabContainer.widget(1)
     tabContainer.addTab(resultsPage.ResultsPage(), "Test Results")
     resultsPageInst = tabContainer.widget(1)
     tabContainer.addTab(canvasUploadPage.CanvasUploadPage(user_type=userType), "Canvas Uploader")
     canvasUploaderInst = tabContainer.widget(2)
     tabContainer.addTab(autopullElmaPage.AutopullElmaPage(user_type=userType), "Auto-Pull && ELMA")
     elmaInst = tabContainer.widget(3)
-    # tabContainer.addTab(vmPage.VmPage(), "VM Config")
-    # vmPageInst = tabContainer.widget(5)
 
 
     #give the home page the funcion to call when the SHOW RESULTS button is clicked
@@ -48,27 +64,31 @@ def initWindow():
     createStatusBar(window)
     return window
 
+
+
 def createSplash():
     loadingTips = ["Loading..."]
-
     splashLoc = str(pathlib.Path(__file__).parent.absolute()) + "/herpSplash.png"
-    print("Splash Location: " + splashLoc)
+    #print("Splash Location: " + splashLoc)
     splash = QtWidgets.QSplashScreen(pixmap = QtGui.QPixmap(splashLoc))
-    splash.showMessage('<h2> Tip: ' + random.choice(loadingTips) + "</h2>", QtCore.Qt.AlignHCenter | QtCore.Qt.AlignBottom, QtGui.QColor(20,20,20))
+    splash.showMessage('<h2>' + random.choice(loadingTips) + "</h2>", QtCore.Qt.AlignHCenter | QtCore.Qt.AlignBottom, QtGui.QColor(20,20,20))
     return splash
 
+
+
+#creates the global status bar at the bottom of the ui
 def createStatusBar(window):
-    #creates the global status bar at the bottom of the ui
     status = QtWidgets.QStatusBar()
     statusMessage = QtWidgets.QLabel("HerpTest - GUI (herp-gui)")
     status.addWidget(statusMessage)
     status.setStyleSheet("background-color: #83d3f7")
     window.setStatusBar(status)
 
+
+
 def main():
     initEnviron()
     app = QtWidgets.QApplication([])
-
     #handle the no-splash option 
     if len(sys.argv) > 1 and sys.argv[1] == "--no-splash":
         window = initWindow()
@@ -79,12 +99,10 @@ def main():
         splash.show()
         window = initWindow()
         end = time.time()
-        if (end-start) < 2:
-            time.sleep(2-(end-start))#give the user a change to see screen if they have a monstrously fast computer
         window.show()
         splash.finish(window)
-
     sys.exit(app.exec_())
+
 
 
 if __name__ == "__main__":
