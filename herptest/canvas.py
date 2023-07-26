@@ -180,41 +180,19 @@ class CanvasWrapper:
                                 else:
                                     print("-=- No late policy specified. No points deducted for late submissions. -=-")
 
-                            course = None
-                            for test_course in self.get_courses():
-                                if test_course.name == _course:
-                                    course = test_course
-                                    does_folder_exist =False
-                                    for folder in course.get_folders():
-                                        if folder.name == "Assignments":
-                                            does_folder_exist = True
-                                            cursor = folder
-                                            # print("assignment position is:", cursor.position)
-                                    if not does_folder_exist:
-                                        print("Warning: No 'Assignments' folder detected; student summary files will save in unfiled on canvas")
-                                        cursor = course
-
-                                    does_folder_exist = False
-                                    for folder in course.get_folders():
-                                        if folder.name == assn.name:
-                                            does_folder_exist = True
-                                            cursor = folder
-                                            # print("\nFound folder in:", cursor, "\n")
-                                    if not does_folder_exist:
-                                        cursor = cursor.create_folder(assn.name, hidden=True)
-
-                                    # print("Files in Assignment Grades Folder:")
-                                    # for file in cursor.get_files():
-                                    #     print("*", file.display_name)
-                                    # print("\n")
-
-                            if course == None:
-                                print("Error: valid course could not be found (Check around line 192)!!")
                             else:
                                 print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + str(sub.score / assn.points_possible * 100) + " to " + str(float(res[2])) + ".")
+
+                                # Send the result.csv to the student's account
+                                csv_path = path.split("/summary")[0]
+                                for file in os.listdir(csv_path):
+                                    # Look for files ending with .txt
+                                    if file.endswith(str(sub.user_id)):
+                                        csv_path = csv_path + "/" + file + "/result.csv"
+                                        sub.upload_comment(csv_path)
+
                                 if assn.use_rubric_for_grading:
-                                    # print(*assn.rubric)
-                                    # print(assn.rubric_settings['id'])
+                                    sub.edit(rubric_assessment = None, comment= None)
                                     rubric_assess = RubricAssessment(self.canv_url, {
                                         'id': temp_id,
                                         'bookmarked' : False,
@@ -224,14 +202,6 @@ class CanvasWrapper:
                                         }
                                     })
                                     temp_id = temp_id + 1
-
-                                    # Change Criterion to match the student's performance
-                                    csv_path = os.getcwd() + "/Results/"
-                                    for file in os.listdir(csv_path):
-                                        # Look for files ending with .txt
-                                        if file.endswith(str(sub.user_id)):
-                                            csv_path = csv_path + file + "/result.csv"
-                                            # sub.upload_comment(csv_path)
 
                                     results = []
                                     with open(csv_path, 'r') as _summary:
@@ -246,25 +216,16 @@ class CanvasWrapper:
                                             results.append(float((next(csv_reader)[1].split("%")[0])))
 
                                     counter = 0
-                                    # print("\nCriterion sent to Canvas:")
                                     for section in assn.rubric:
                                         criterion[section['id']] =  {
                                             'points' : section['points'] * results[counter] / 100,
                                             'rating_id' : rating_dict[section['id']][criterion[section['id']]['points']],
                                             'comments' : ""
                                         }
-                                        # print("*", criterion[section['id']]['points'], "=", criterion[section['id']]['rating_id'],
-                                        #       "and says:", criterion[section['id']]['comments'])
                                         counter = counter + 1
 
                                     rubric_assess.rubric_assessment.update(criterion)
-                                    # print(rubric_assess.rubric_assessment)
-                                    # print("checking rubric:", assn.rubric_settings)
                                     sub.edit(
-                                        comment={
-                                            # Have commented when testing or a lot of comments will appear :(
-                                            # 'text_comment' : "Please see attached file."
-                                        },
                                         submission={
                                             'posted_grade': str(res[2]) + "%"
                                         },
@@ -272,10 +233,6 @@ class CanvasWrapper:
                                     )
                                 else:
                                     sub.edit(
-                                        comment={
-                                            # Have commented when testing or a lot of comments will appear :(
-                                            # 'text_comment' : "Please see attached file."
-                                        },
                                         submission={
                                             'posted_grade': str(res[2]) + "%"
                                         }
