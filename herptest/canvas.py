@@ -523,8 +523,8 @@ def main():
     print("-=- Which course are you choosing? {Enter Number, 0 indexed} -=-")
     index_choice = input()
     try:
-        if int(index_choice) > index_choice or int(index_choice) < 0:
-            print("| IndexError: Your choice is not listed")
+        if not (courses._is_larger_than(int(index_choice)) and int(index_choice) >= 0):
+            print("| IndexError: Your choice is not listed!")
             print("└─> exiting with error")
             exit(-1)
 
@@ -548,13 +548,14 @@ def main():
     print("-=- Which assignment are you choosing? {Enter Number, 0 indexed} -=-")
     index_choice = input()
     try:
+        if not (assignments._is_larger_than(int(index_choice)) and int(index_choice) >= 0):
+            print("| IndexError: Your choice is not listed!")
+            print("└─> exiting with error")
+            exit(-1)
+
         assn_name = assignments[int(index_choice)].name
     except ValueError:
         print("| ValueError: Your choice could not be converted from str -> int")
-        print("└─> exiting with error")
-        exit(-1)
-    except IndexError:
-        print("| IndexError: Your choice is not listed")
         print("└─> exiting with error")
         exit(-1)
 
@@ -573,9 +574,10 @@ def main():
         print("└─> exiting with error")
         exit(-1)
     except IndexError:
-        print("| IndexError: Your choice is not listed")
+        print("| IndexError: Your choice is not listed!")
         print("└─> exiting with error")
         exit(-1)
+
     
     if choice == "Push":
         print("-=- Enter the relative path for your summary.csv file in your Test Suite's 'Results' folder {If on WSL, remember to use mounted drives and linux formatted paths} -=-")
