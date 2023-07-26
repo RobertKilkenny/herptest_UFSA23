@@ -115,14 +115,14 @@ class CanvasWrapper:
                 for subm in allSubmissions:
                     for attch in subm.attachments:
                         submissionFile = requests.get(attch.url)
-                        if (subm.late):
-                            if not os.path.exists(subdir):
-                                os.mkdir(subdir)
-                            open(subdir + str(names[subm.user_id]) + "_LATE_" + str(subm.user_id) + "_" + str(subm.assignment_id) + "_" + attch.filename, "wb").write(submissionFile.content)
-                        else:
-                            if not os.path.exists(subdir):
-                                os.mkdir(subdir)
-                            open(subdir + str(names[subm.user_id]) + "_" + str(subm.user_id) + "_" + str(subm.assignment_id) + "_" + attch.filename, "wb").write(submissionFile.content)
+                        # if (subm.late):
+                        #     if not os.path.exists(subdir):
+                        #         os.mkdir(subdir)
+                        #     open(subdir + str(names[subm.user_id]) + "_LATE_" + str(subm.user_id) + "_" + str(subm.assignment_id) + "_" + attch.filename, "wb").write(submissionFile.content)
+                        # else:
+                        #     if not os.path.exists(subdir):
+                        #         os.mkdir(subdir)
+                        open(subdir + str(names[subm.user_id]) + "_" + str(subm.user_id) + "_" + str(subm.assignment_id) + "_" + attch.filename, "wb").write(submissionFile.content)
                         shutil.make_archive(path + '/submissions', 'zip', subdir)
                 return assn.submissions_download_url
             
