@@ -69,9 +69,9 @@ def initWindow():
 def createSplash():
     loadingTips = ["Loading..."]
     splashLoc = str(pathlib.Path(__file__).parent.absolute()) + "/herpSplash.png"
-    print("Splash Location: " + splashLoc)
+    #print("Splash Location: " + splashLoc)
     splash = QtWidgets.QSplashScreen(pixmap = QtGui.QPixmap(splashLoc))
-    splash.showMessage('<h2> Tip: ' + random.choice(loadingTips) + "</h2>", QtCore.Qt.AlignHCenter | QtCore.Qt.AlignBottom, QtGui.QColor(20,20,20))
+    splash.showMessage('<h2>' + random.choice(loadingTips) + "</h2>", QtCore.Qt.AlignHCenter | QtCore.Qt.AlignBottom, QtGui.QColor(20,20,20))
     return splash
 
 
@@ -99,9 +99,6 @@ def main():
         splash.show()
         window = initWindow()
         end = time.time()
-        if (end-start) < 2:
-            #give the user a change to see screen if they have a monstrously fast computer
-            time.sleep(2-(end-start))
         window.show()
         splash.finish(window)
     sys.exit(app.exec_())
