@@ -505,6 +505,11 @@ def main():
     print("-=- Which course are you choosing? {Enter Number, 0 indexed} -=-")
     index_choice = input()
     try:
+        if int(index_choice) > index_choice or int(index_choice) < 0:
+            print("| IndexError: Your choice is not listed")
+            print("└─> exiting with error")
+            exit(-1)
+
         course_name = courses[int(index_choice)].name
     except ValueError:
         print("| ValueError: Your choice could not be converted from str -> int")
@@ -530,6 +535,10 @@ def main():
         print("| ValueError: Your choice could not be converted from str -> int")
         print("└─> exiting with error")
         exit(-1)
+    except IndexError:
+        print("| IndexError: Your choice is not listed")
+        print("└─> exiting with error")
+        exit(-1)
 
     print("-=- Would you like to push grades or pull submissions for assignment: " + assn_name + " -=-")
     temp_count = 0
@@ -543,6 +552,10 @@ def main():
         choice = choices[int(index_choice)]
     except ValueError:
         print("| ValueError: Your choice could not be converted from str -> int")
+        print("└─> exiting with error")
+        exit(-1)
+    except IndexError:
+        print("| IndexError: Your choice is not listed")
         print("└─> exiting with error")
         exit(-1)
     
