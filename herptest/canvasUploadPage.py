@@ -19,18 +19,6 @@ class CanvasUploadPage(canvas_interface.AbstractCanvasInterface):
         self.csvSelect.setFixedWidth(100)
         self.csvSelect.clicked.connect(self.uploadFilePicker)
 
-        self.modeLabel = QtWidgets.QLabel("Upload CSV as:")
-        self.modeLayout = QtWidgets.QVBoxLayout()
-        self.modeSelectGroup = QtWidgets.QButtonGroup()
-        self.modeSelectGroup.setExclusive(True)
-        self.modeSelectRubric = QtWidgets.QCheckBox("Structured Rubric")
-        self.modeSelectTests = QtWidgets.QCheckBox("Test Suite Results")
-        self.modeSelectGroup.addButton(self.modeSelectRubric)
-        self.modeSelectGroup.addButton(self.modeSelectTests)
-        self.modeLayout.addWidget(self.modeSelectRubric)
-        self.modeLayout.addWidget(self.modeSelectTests)
-        self.modeLayout.setContentsMargins(10,10,10,10)
-
         self.uploadButton = QtWidgets.QPushButton("Upload")
         self.uploadButton.setFixedWidth(100)
         self.uploadButton.setFixedHeight(50)
@@ -47,14 +35,13 @@ class CanvasUploadPage(canvas_interface.AbstractCanvasInterface):
         self.uploadContainer.setAlignment(self.csvPathField, QtCore.Qt.AlignTop)
         self.uploadContainer.addWidget(self.csvSelect,1,1)
         self.uploadContainer.setAlignment(self.csvSelect, QtCore.Qt.AlignTop)
-        self.uploadContainer.addWidget(self.modeLabel,0,2)
-        self.uploadContainer.addLayout(self.modeLayout,1,2)
-        self.uploadContainer.setAlignment(self.modeLayout, QtCore.Qt.AlignTop)
-        self.uploadContainer.addWidget(self.uploadButton,1,3)
-        self.uploadContainer.addWidget(self.lateLabel,1,0)
-        self.uploadContainer.addWidget(self.lateField,1,0)
-        self.uploadContainer.setAlignment(self.lateLabel, QtCore.Qt.AlignVCenter)
+        self.uploadContainer.addWidget(self.uploadButton,3,1)
+        self.uploadContainer.setAlignment(self.uploadButton, QtCore.Qt.AlignTop)
+        self.uploadContainer.addWidget(self.lateLabel,3,0)
+        self.uploadContainer.addWidget(self.lateField,3,0)
+        self.uploadContainer.setAlignment(self.lateLabel, QtCore.Qt.AlignTop)
         self.uploadContainer.setAlignment(self.lateField, QtCore.Qt.AlignBottom)
+        # self.uploadContainer.setContentsMargins(10, 10, 10, 20)
 
         #self.layout is the reference to the layout manager that WE control, not the .layout() that returns the layout
         #   manager tracked by QT
@@ -93,27 +80,16 @@ class CanvasUploadPage(canvas_interface.AbstractCanvasInterface):
 
     def handleUpload(self):
         #this method uses the canvasWrapper attributes of the parent class
-        if self.modeSelectTests.checkState() == QtCore.Qt.Checked:
-            try:
-                self.late_policy = list(map(float, self.lateField.text().split()))
-                self.canvasWrapper.push_grades(self.currentCourse, self.currentAssignment, self.uploadPath, self.late_policy)
-                success_dialog = QtWidgets.QMessageBox()
-                success_dialog.setText('Grades successfully uploaded!')
-                success_dialog.setWindowTitle('Success!')
-                success_dialog.exec_()
-            except ValueError:
-                print("-=- Invalid late policy (check for non-space, non-float values). Please input again.-=-")
-                late_dialog = QtWidgets.QMessageBox()
-                late_dialog.setText('Check for non-space, non-float values in the late policy input box.')
-                late_dialog.setWindowTitle('Invalid late policy!')
-                late_dialog.exec_()
-
-        elif self.modeSelectRubric.checkState() == QtCore.Qt.Checked:            
-            self.canvasWrapper.process_and_upload_file(self.currentCourseId, self.currentAssignment, self.uploadPath)
-        
-        else:
-            #neither was selected, create a warning dialog and do nothing
-            dialog = QtWidgets.QMessageBox()
-            dialog.setText('Select either "Structured Rubric" or "Test Suite Results " mode in order to upload.')
-            dialog.setWindowTitle('Select an Upload Mode!')
-            dialog.exec_()
+        try:
+            self.late_policy = list(map(float, self.lateField.text().split()))
+            self.canvasWrapper.push_grades(self.currentCourse, self.currentAssignment, self.uploadPath, self.late_policy)
+            success_dialog = QtWidgets.QMessageBox()
+            success_dialog.setText('Grades successfully uploaded!')
+            success_dialog.setWindowTitle('Success!')
+            success_dialog.exec_()
+        except ValueError:
+            print("-=- Invalid late policy (check for non-space, non-float values). Please input again.-=-")
+            late_dialog = QtWidgets.QMessageBox()
+            late_dialog.setText('Check for non-space, non-float values in the late policy input box.')
+            late_dialog.setWindowTitle('Invalid late policy!')
+            late_dialog.exec_()

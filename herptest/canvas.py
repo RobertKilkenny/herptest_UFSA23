@@ -88,9 +88,10 @@ class CanvasWrapper:
 
 
     #Get submissions.zip download link from a given course assignment using the passed in course name and assignment name
-    def get_download_link(self, _course, assignment):
+    def get_download_link(self, _course, assignment, path):
         # default directory- recreate if already exists
-        subdir = os.getcwd() + "/submissions"
+        subdir = path + "/submissions/"
+        print(subdir)
         if(os.path.exists(subdir)):
             shutil.rmtree(subdir)
         else:
@@ -108,14 +109,6 @@ class CanvasWrapper:
         for assn in self.get_assignments(list(course.id for course in self.get_courses() if course.name == _course)[0]):
             if(assignment == assn.name):
                 allSubmissions = assn.get_submissions()
-                try:
-                    if(assn.use_rubric_for_grading):
-                        print("Downloading Grading rubric")
-                        test = assn.rubric
-                    else:
-                        print("Does not use a rubric for grading")
-                except:
-                    print("Does not use a rubric for grading")
 
                 # Download each submission, and place them in the submissions folder
                 # Append LATE if late
@@ -124,14 +117,14 @@ class CanvasWrapper:
                     for attch in subm.attachments:
                         submissionFile = requests.get(attch.url)
                         if (subm.late):
-                            if not os.path.exists("submissions"):
-                                os.mkdir("submissions")
-                            open("submissions/" + str(names[subm.user_id]) + "_LATE_" + str(subm.user_id) + "_" + str(subm.assignment_id) + "_" + attch.filename, "wb").write(submissionFile.content)
+                            if not os.path.exists(subdir):
+                                os.mkdir(subdir)
+                            open(subdir + str(names[subm.user_id]) + "_LATE_" + str(subm.user_id) + "_" + str(subm.assignment_id) + "_" + attch.filename, "wb").write(submissionFile.content)
                         else:
-                            if not os.path.exists("submissions"):
-                                os.mkdir("submissions")
-                            open("submissions/" + str(names[subm.user_id]) + "_" + str(subm.user_id) + "_" + str(subm.assignment_id) + "_" + attch.filename, "wb").write(submissionFile.content)
-                        shutil.make_archive("submissions", 'zip', subdir)
+                            if not os.path.exists(subdir):
+                                os.mkdir(subdir)
+                            open(subdir + str(names[subm.user_id]) + "_" + str(subm.user_id) + "_" + str(subm.assignment_id) + "_" + attch.filename, "wb").write(submissionFile.content)
+                        shutil.make_archive(path + '/submissions', 'zip', subdir)
                 return assn.submissions_download_url
             
 
@@ -557,9 +550,17 @@ def main():
         print("-=- Grades pushed successfully. Shutting down -=-")
 
     elif choice == "Pull":
-        print("-=- Fetching assignment download link w/ manual download mode enabled... -=-")
-        dl_link = canvas.get_download_link(course_name, assn_name)
-        print("Downloaded successfully.")
+        input("-=- Specify relative path where the submissions.zip folder should be downloaded (no input = current directory). -=-")
+        submission_path = input()
+        submission_path = os.getcwd() + '/' + submission_path
+        print("-=- Fetching assignment submissions... -=-")
+        try:
+            dl_link = canvas.get_download_link(course_name, assn_name, path)
+        except:
+            print("| InputError: Invalid path entered. ")
+            print("└─> exiting with error")
+            exit(-1)
+        print("-=- Downloaded successfully. -=-")
         print("-=- Shutting down -=-")
 
 
