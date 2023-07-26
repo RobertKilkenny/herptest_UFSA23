@@ -197,15 +197,19 @@ class CanvasWrapper:
                                 print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + str(sub.score / assn.points_possible * 100) + "% to " + str(float(res[2])) + "%.")
                             except:
                                 print("Score of " + res[0] + ", ID: " + res[1] + " changed from " + "no grade" + " to " + str(float(res[2])) + "%.")
+                                
+                            sub.edit(
+                                submission={
+                                    'posted_grade': str(res[2]) + "%"
+                                })
 
-                            else:
-                                # Send the result.csv to the student's account
-                                csv_path = path.split("/summary")[0]
-                                for file in os.listdir(csv_path):
-                                    # Look for files ending with .txt
-                                    if file.endswith(str(sub.user_id)):
-                                        csv_path = csv_path + "/" + file + "/result.csv"
-                                        sub.upload_comment(csv_path)
+                            # Send the result.csv to the student's account
+                            csv_path = path.split("/summary")[0]
+                            for file in os.listdir(csv_path):
+                                # Look for files ending with .txt
+                                if file.endswith(str(sub.user_id)):
+                                    csv_path = csv_path + "/" + file + "/result.csv"
+                                    sub.upload_comment(csv_path)
 
                                 if assn.use_rubric_for_grading:
                                     sub.edit(rubric_assessment = None, comment= None)
