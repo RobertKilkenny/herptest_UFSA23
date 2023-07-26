@@ -91,7 +91,6 @@ class CanvasWrapper:
     def get_download_link(self, _course, assignment, path):
         # default directory- recreate if already exists
         subdir = path + "/submissions/"
-        print(subdir)
         if(os.path.exists(subdir)):
             shutil.rmtree(subdir)
         else:
@@ -550,12 +549,11 @@ def main():
         print("-=- Grades pushed successfully. Shutting down -=-")
 
     elif choice == "Pull":
-        input("-=- Specify relative path where the submissions.zip folder should be downloaded (no input = current directory). -=-")
-        submission_path = input()
+        submission_path = input("-=- Specify relative path where the submissions.zip folder should be downloaded (no input = current directory). -=-")
         submission_path = os.getcwd() + '/' + submission_path
         print("-=- Fetching assignment submissions... -=-")
         try:
-            dl_link = canvas.get_download_link(course_name, assn_name, path)
+            dl_link = canvas.get_download_link(course_name, assn_name, submission_path)
         except:
             print("| InputError: Invalid path entered. ")
             print("└─> exiting with error")
