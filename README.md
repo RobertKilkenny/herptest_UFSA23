@@ -26,7 +26,6 @@
 
 <!-- Static Badge -->
 <!--
-[![Static Badge](https://img.shields.io/badge/license-GPL--3.0-orange)](https://github.com/RobertKilkenny/herptest_UFSA23/blob/master/LICENSE)
 -->
 
 <!-- Dynamic Badge(s)
@@ -37,13 +36,25 @@
 # Table of Content
 - [Installation](#installation)
 - [Getting Started](#getting-started)
+- [Instuctions](#instructions)
+    - [Herp-Canvas](#herp-canvas)
+      - [Pull](#pull)
+      - [Push](#push)
+    - [Elma](#elma)
+    - [Herp](#herp)
+    - [Moss](#moss)
+      - [Directories](#directories)
 - [Project Structure](#project-structure)
     - [HerpTest Toolbox (herptest.toolbox)](#herptest-toolbox-herptesttoolbox)
     - [Extracting LMS Archives (elma)](#extracting-lms-archives-elma)
     - [Running Unit Test Suite (herp)](#running-unit-test-suite-herp)
+    - [Graphical Interface (herp-gui)](#graphical-interface-herp-gui)
+    - [HerpTest Canvas Interface (herp-canvas)](#herptest-canvas-interface-herp-canvas)
+    - [Measure Of Software Similarity (moss)](#measure-of-software-similarity-moss)
 - [Under the Hood](#under-the-hood)
     - [Config Class](#config-class)
     - [Test Set Class](#test-set-class)
+- [Upload](#upload)
 - [License](#license)
 - [Credits](#credits)
 
@@ -67,17 +78,30 @@ pip install dist/herptest-<version>.tar.gz
 herp -V
 ```
 
-> **Note:**
-> `"<version>"` is a number in the format `[0.#.#.##]`
+> **ATTN:**
+> `herptest` is meant to be installed in a linux environment!
 
 > **ATTN:**
 > It is suggested to create a python `venv` before installing the module
+
+> **Note:**
+> `"<version>"` is a number in the format `[0.MAJOR.MINOR.PATCH]`
+
 <!-- >> `"<version>"` is a number in the format `[0.MAJOR.MINOR.PATCH]` -->
 <br></br>
 
 # Getting Started
-Type `'herp'` in the `root` directory of the below file structure via the terminal
 
+A general workflow when using `herptest` is as follows:
+1.  Pull Student submissions from the LMS [`herp-canvas`]
+2. Extract the submissions from the LMS archive to a submissions directory [`elma`]
+3. Evaluate the submissions through a test suite [`herp`]
+4. Check for indications of student-to-student plagiarism [`moss`]
+5. Push graded student performance(s) to the LMS [`herp-canvas`]
+
+<br>
+
+# Instructions
 ```bash
 .
 ├── Projects
@@ -101,10 +125,122 @@ Type `'herp'` in the `root` directory of the below file structure via the termin
     │   └── Program.py
     └── Subject
 ```
+> Above is the recommended file structure of a test suite:
+
 > **Note:**
 > `"<student>"` is the folder for the student that will be submitting. (there may be multiple)
 
-<br></br>
+<br>
+
+## Herp-Canvas
+
+<br>
+
+`'herp-canvas'` will initiate a series of prompts for the user to select a course > assignment to either push grades to or pull student submissions from Canvas.
+
+<br>
+
+### Pull
+
+<br>
+
+> If the `pull` option is selected, a `submissions` directory and LMS archive file (i.e. submissions.zip) will be created.
+
+<br>
+
+### Push
+
+<br>
+
+> If the `push` option is selected, the _relative_ or _absolute_ path to a `summary.csv` file must be provided to push grades to canvas.
+
+
+<br>
+
+## Elma
+
+<br>
+
+`'elma'` needs to be provided the LMS archive (i.e. submissions.zip) and a destination to extract it's contents.
+
+<br>
+
+> **Note**
+> It is suggested to make the destination `Projects` in the test suite directory
+```
+elma ./submissions.zip ./Projects
+```
+
+<br>
+
+## Herp
+
+<br>
+
+Run `'herp'` in the `root` directory of the test suite
+
+<br>
+
+
+
+After running `'herp'`, the `Build` and `Results` directories will be created. The `Results` directory will contain the `summary.csv` along with directories for each graded student. Each student directory will contain a `result.csv` with information of their test case performance for a test suite.
+
+<br>
+
+## Moss
+
+<br>
+
+`'moss'` needs a programming language provided (i.e. python) as an argument.
+
+> **ATTN:**
+> Two directories must be provided!
+
+> **Note:**
+> By default `basefiles` and `submissions` are set
+
+<br>
+
+After `moss` is ran, a `report.html` file should be created in the current directory. Opening this in a web browser (i.e Google Chrome, Firefox, Microsoft Edge) will display any similarities found in the `submissions` directory.
+
+<br>
+
+### Directories
+* `Basefiles` - a directory that holds instructor provided source files which has code that will be omitted in the similarity check
+* `Submissions` - a directory that holds the student submissions which will be subject to similarity checks
+
+> **ATTN:**
+> There must be _`at least one source file`_ in the `basefiles` directory that is _`not empty`_. Lastly, the student source files **`must have the same name as the base source file`** in separate student directories within the `submissions` directory.
+
+> **Note:**
+> It is strongly suggested to use `elma` to extract students submissions from an LMS archive to a `submissions` directory. Also, there **`must be at least two student submissions`** for there to be any meaningful similarity checks.
+
+<br>
+
+```bash
+.
+├── basefiles
+│   ├── a01-base.py
+│   ├── b01-base.py
+│   └── c01-base.py
+└── submissions
+    ├── sample_01
+    │   └── a01-submission.py
+    ├── sample_02
+    │   └── a02-submission.py
+    ├── sample_03
+    │   └── a03-submission.py
+    ├── sample_04
+    │   └── b01-submission.py
+    ├── sample_05
+    │   └── b02-submission.py
+    ├── sample_06
+    │   └── c01-submission.py
+    └── sample_07
+        └── c02-submission.py
+```
+
+<br><br>
 
 # Project Structure
 This package includes three primary tools:
@@ -112,8 +248,11 @@ This package includes three primary tools:
 - `herptest.toolbox`: Standardized / Cross-platform function calls.
 > (Currently only library loading)
 - `elma`: (E)xtract (LM)S (A)rchive - A command line tool to extract student submissions.
-> (Support is limited to Canvas)
+> (Support is currently limited to Canvas)
 - `herp`: A command line tool to run a project test suite as specified by the user.
+- `herp-gui`: a GUI tool that interfaces with the CLI herptest functions
+- `herp-canvas`: a CLI interface to Canvas in order to push/pull student submissions
+- `moss`: a CLI tool to run Stanford Moss similarity checking on student submissions
 
 <br></br>
 
@@ -178,6 +317,59 @@ options:
   -w, --warn         display warning information (console)
   -d, --debug        capture debug information (logfile)
   -s SET, --set SET  test only projects designated (e.g., *_LATE*)
+```
+
+<br></br>
+
+## Graphical Interface (`herp-gui`)
+
+The `herp-gui` command will initiate the gui for herptest.
+
+> **ATTN:**
+> Additional OS packages may need to be installed (especially for a newly installed WSL2)
+
+```bash
+# Install OS dependencies
+
+sudo apt install '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
+```
+
+<br></br>
+
+## HerpTest Canvas Interface (`herp-canvas`)
+
+The `herp-canvas` command provides a CLI interface to an LMS (Canvas specifically) in order to push grades up to or pull submissions down from.
+
+```
+usage: herp-canvas [-h] [-S]
+
+A program to automatically push grades or pull submissions to a Canvas assignment
+
+options:
+  -h, --help          show this help message and exit
+  -S, -s, --setupenv  Run the setup wizard for Canvas API Key Environment Variables
+```
+
+<br></br>
+
+## Measure Of Software Similarity (`moss`)
+
+The `moss` command will initiate the gui for herptest.
+
+```
+usage: moss [-h] [-V] [-S] [language] [basefiles] [submissions]
+
+A program to run Stanford moss on student submitted projects. Operates by taking in folder of base files and folders of submissions, positional arguemnts: language, basefiles, submissions
+
+positional arguments:
+  language            language to test with
+  basefiles           path of folder containing base files that you provided to students (default ./basefiles)
+  submissions         path of folder containing student submissions (default ./submissions)
+
+options:
+  -h, --help          show this help message and exit
+  -V, -v, --version   show program's version number and exit
+  -S, -s, --setupenv  Run the setup wizard for MOSS API Key Environment Variables
 ```
 
 <br></br>
@@ -335,9 +527,17 @@ TestSet has the following properties:
   set_penalties:  test-set penalties as a list of tuples (name, fraction, function) (readonly)
   max_penalty:    maximum overall penalty that can be applied to the score (readonly)
 ```
-  
-Called after building the framework. It should return any framework_context that is important to properly shutdown /--
 
+<br></br>
+
+  
+# Upload
+
+```bash
+# Upload Module to PyPi
+
+twine upload dist/herptest-<version>.tar.gz
+```
 
 <br></br>
 
