@@ -1,4 +1,4 @@
-import os
+import os, pathlib
 
 class EnvWrapper:
     def __init__(self):
@@ -19,7 +19,8 @@ class EnvWrapper:
 
     # Populates the keys into canvas.env permanently
     def populate_env(self):
-        with open('canvas.env', 'w') as f:
+        canvasLoc = str(pathlib.Path(__file__).parent.absolute())
+        with open(canvasLoc + '/canvas.env', 'w') as f:
             print("Enter Live Canvas Token: ")
             self.prod_token = "TOKEN="+str(self.input_func()+"\n")
             print("Enter Beta Canvas Token: ")
@@ -31,7 +32,8 @@ class EnvWrapper:
 
     # Brings canvas keys into virtual env during runtime
     def read_env(self):
-        with open('canvas.env','r') as c:
+        canvasLoc = str(pathlib.Path(__file__).parent.absolute())
+        with open(canvasLoc + '/canvas.env','r') as c:
             for line in c.readlines():
                 try:
                     self.key,self.value = line.split('=')
@@ -41,13 +43,15 @@ class EnvWrapper:
 
     # Clear the contents of the canvas.env
     def clear_env(self):
-        open('canvas.env', 'w').close()
+        canvasLoc = str(pathlib.Path(__file__).parent.absolute())
+        open(canvasLoc + '/canvas.env', 'w').close()
 
 
 
     # Set the key in canvas.env without CLI interaction
     def set_env(self, token, token_type, env_type="canvas"):
         # set token_type=token in the canvas.env
-        with open(env_type + ".env", 'w') as f:
+        canvasLoc = str(pathlib.Path(__file__).parent.absolute())
+        with open(canvasLoc + "/" + env_type + ".env", 'w') as f:
             self.token = token_type + "=" + token +"\n"
             f.write(self.token)

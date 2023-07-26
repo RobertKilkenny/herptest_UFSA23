@@ -10,7 +10,27 @@ def initEnviron():
     os.environ["XDG_RUNTIME_DIR"] = "/tmp/herp-runtime" #used by qt for cache
 def initWindow():
 
-    userType = pyautogui.confirm('View as a TA or a Teacher?', 'Select TA or Teacher', ['TA', 'Teacher']).lower()
+    userType = pyautogui.confirm('View as a TA or a Teacher?', 'Select TA or Teacher', ['TA', 'Teacher'])
+    if userType == None:
+        print("Role was not chosen!")
+        exit(-1)
+    else:
+        userType = userType.lower()
+
+
+    canvasLoc = str(pathlib.Path(__file__).parent.absolute())
+    if not os.path.exists(canvasLoc + "/canvas.env"):
+        apiKey = pyautogui.prompt(text="Please enter the Canvas API Key", title="Populate canvas.env")
+        
+        if apiKey == None or apiKey == '':
+            print("No API key was entered!")
+            exit(-1)
+        else:
+            with open(canvasLoc + "/canvas.env", "w") as f:
+                prod_token = "TOKEN=" + apiKey
+                f.write(prod_token), print("API Key Stored!")
+            print("Canvas env Location: " + canvasLoc + "/canvas.env")
+
 
     window = QtWidgets.QMainWindow()
     
