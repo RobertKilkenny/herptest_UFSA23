@@ -235,7 +235,7 @@ After `moss` is ran, a `report.html` file should be created in the current direc
     ├── sample_05
     │   └── b02-submission.py
     ├── sample_06
-    |   └── c01-submission.py
+    │   └── c01-submission.py
     └── sample_07
         └── c02-submission.py
 ```
