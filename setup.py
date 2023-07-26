@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='herptest',
-    version='0.9.9.5',
+    version='0.9.9.7',
     packages=['herptest',],
     url='https://github.com/RobertKilkenny/herptest_UFSA23',
     license='GPL 3',
@@ -47,7 +47,7 @@ setup(
         [
             'elma = herptest.extract_lms_archive:main',
             'herp = herptest.run_test_suite:main',
-            'herp_gui = herptest.gui:main',
+            'herp-gui = herptest.gui:main',
             'csv-upload = herptest.canvas:main',
             'herp-canvas = herptest.canvas:main',
             'moss = herptest.run_moss:main'
