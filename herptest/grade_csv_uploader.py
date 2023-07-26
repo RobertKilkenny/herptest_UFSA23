@@ -11,7 +11,7 @@ from herptest import canvas
 from herptest.env_wrapper import EnvWrapper
 
 # Version Number for Release
-VERSION_NUM = '0.9.9.5'
+VERSION_NUM = '0.9.9.17'
 
 # handle command line args
 def parse_arguments():
